@@ -1,4 +1,4 @@
-// MasterViewController.swift
+// DownloadTests.swift
 //
 // Copyright (c) 2014–2015 Alamofire Software Foundation (http://alamofire.org/)
 //
@@ -22,23 +22,24 @@
 
 import Foundation
 import Alamofire
+import XCTest
 
-enum HTTPBinRoute: URLStringConvertible {
-    case Method(Alamofire.Method)
-    case BasicAuth(String, String)
+class AlamofireTLSEvaluationTestCase: XCTestCase {
+    func testSSLCertificateCommonNameValidation() {
+        let URL = "https://testssl-expire.disig.sk/"
 
-    var URLString: String {
-        let baseURLString = "http://httpbin.org/"
-        let path: String = {
-            switch self {
-            case .Method(let method):
-                return "/\(method.rawValue.lowercaseString)"
-            case .BasicAuth(let user, let password):
-                return "/basic-auth/\(user)/\(password)"
-            }
-        }()
+        let expectation = expectationWithDescription("\(URL)")
 
-        return NSURL(string: path, relativeToURL: NSURL(string: baseURLString))!.absoluteString!
+        Alamofire.request(.GET, URL)
+            .response { (_, _, _, error) in
+                XCTAssertNotNil(error, "error should not be nil")
+                XCTAssert(error?.code == NSURLErrorServerCertificateUntrusted, "error should be NSURLErrorServerCertificateUntrusted")
+
+                expectation.fulfill()
+        }
+
+        waitForExpectationsWithTimeout(10) { (error) in
+            XCTAssertNil(error, "\(error)")
+        }
     }
 }
-
